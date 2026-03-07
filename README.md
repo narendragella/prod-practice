@@ -1,0 +1,2 @@
+# prod-practice
+gitops approach
