@@ -1,7 +1,9 @@
 pipeline {
 
  agent any
-
+ triggers {
+        githubPush()
+    }
  environment {
   IMAGE = "dockerhubuser/node-demo"
   MANIFEST_REPO = "https://github.com/yourname/nodejs-demo-manifests.git"
