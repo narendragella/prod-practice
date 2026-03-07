@@ -1,0 +1,57 @@
+pipeline {
+
+ agent any
+
+ environment {
+  IMAGE = "dockerhubuser/node-demo"
+  MANIFEST_REPO = "https://github.com/yourname/nodejs-demo-manifests.git"
+ }
+
+ stages {
+
+  stage('Clone Code') {
+   steps {
+    git 'https://github.com/yourname/nodejs-demo-app.git'
+   }
+  }
+
+  stage('Build Docker Image') {
+   steps {
+    sh 'docker build -t $IMAGE:$BUILD_NUMBER .'
+   }
+  }
+
+  stage('Push Image') {
+   steps {
+    withCredentials([usernamePassword(
+    credentialsId: 'dockerhub',
+    usernameVariable: 'USER',
+    passwordVariable: 'PASS')]) {
+
+     sh '''
+     docker login -u $USER -p $PASS
+     docker push $IMAGE:$BUILD_NUMBER
+     '''
+    }
+   }
+  }
+
+  stage('Update Manifest') {
+   steps {
+
+    sh '''
+    git clone $MANIFEST_REPO
+    cd nodejs-demo-manifests
+
+    sed -i "s|image:.*|image: dockerhubuser/node-demo:$BUILD_NUMBER|g" deployment.yaml
+
+    git config user.email "jenkins@test.com"
+    git config user.name "jenkins"
+
+    git commit -am "update image"
+    git push
+    '''
+   }
+  }
+ }
+}
